@@ -1,0 +1,60 @@
+# normalize line endings
+*               text=auto
+
+# known binary files are treated as binary
+*.png           filter=lfs diff=lfs merge=lfs -text
+*.jpg           filter=lfs diff=lfs merge=lfs -text
+*.jpeg          filter=lfs diff=lfs merge=lfs -text
+*.gif           filter=lfs diff=lfs merge=lfs -text
+*.ico           filter=lfs diff=lfs merge=lfs -text
+*.mov           filter=lfs diff=lfs merge=lfs -text
+*.mp4           filter=lfs diff=lfs merge=lfs -text
+*.mp3           filter=lfs diff=lfs merge=lfs -text
+*.flv           filter=lfs diff=lfs merge=lfs -text
+*.fla           filter=lfs diff=lfs merge=lfs -text
+*.swf           filter=lfs diff=lfs merge=lfs -text
+*.gz            filter=lfs diff=lfs merge=lfs -text
+*.zip           filter=lfs diff=lfs merge=lfs -text
+*.7z            filter=lfs diff=lfs merge=lfs -text
+*.ttf           filter=lfs diff=lfs merge=lfs -text
+*.pyc           filter=lfs diff=lfs merge=lfs -text
+*.pdf           filter=lfs diff=lfs merge=lfs -text
+*.woff          filter=lfs diff=lfs merge=lfs -text
+*.woff2         filter=lfs diff=lfs merge=lfs -text
+*.eot           filter=lfs diff=lfs merge=lfs -text
+*.svg           filter=lfs diff=lfs merge=lfs -text
+*.docx          filter=lfs diff=lfs merge=lfs -text
+*.DOCX          filter=lfs diff=lfs merge=lfs -text
+
+# documentation
+*.md            text
+LICENSE         text
+
+# known plain text files are treated as plain text
+*.doc           text                diff=astextplain
+*.DOC           text                diff=astextplain
+*.dot           text                diff=astextplain
+*.DOT           text                diff=astextplain
+*.pdf           text                diff=astextplain
+*.PDF           text                diff=astextplain
+*.rtf           text                diff=astextplain
+*.RTF           text                diff=astextplain
+
+# git config
+.gitattributes  text
+.gitignore      text
+
+# config files
+.config         text
+
+# windows files
+*.cmd           text    eol=crlf
+*.bat           text    eol=crlf
+*.txt           text    eol=crlf
+*.ini           text    eol=crlf
+*.ps1           text    eol=crlf
+*.psm1          text    eol=crlf
+*.psd1          text    eol=crlf
+
+# unix files
+*.sh            text	eol=lf

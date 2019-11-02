@@ -1,0 +1,8 @@
+{
+  "[shellscript]": {
+    "editor.fontLigatures": false,
+  },
+  "[git-commit]": {
+    "editor.fontLigatures": false
+  }
+}

@@ -1,0 +1,78 @@
+nameOverride: flux
+fullNameOverride: flux
+
+image:
+  repository: docker.io/fluxcd/flux
+  tag: 1.15.0
+
+rbac:
+  create: true
+  pspEnabled: true
+
+serviceAccount:
+  create: true
+  name: flux
+
+clusterRole:
+  create: true
+  name: flux
+
+labels:
+  system/app: fluxcd
+  system/component: flux
+  cluster/pool: system
+
+affinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        preference:
+          matchExpression:
+            - key: pool
+              operator: In
+              values:
+                - system
+
+git:
+  user: "GitOps"
+  email: "gitops@flux.gitops-system.svc.cluster.local"
+  signingKey: ""
+  verifySignatures: false
+  setAuthor: true
+  ciSkip: true
+  pollInterval: 5m
+  timeout: 60s
+
+registry:
+  pollInterval: 5m
+  rps: 200
+  burst: 125
+  trace: false
+
+  ecr:
+    region:
+    includeId:
+    excludeId:
+    require: false
+
+  acr:
+    enabled: false
+    hostPath: /etc/kubernetes/azure.json
+    secretName: ""
+
+  dockercfg:
+    enabled: false
+    configFileName: /dockercfg/config.json
+    secretName: ""
+
+env:
+  secretName: "flux-git-credentials"
+
+prometheus:
+  enabled: true
+
+syncGarbageCollection:
+  enabled: true
+  dry: true
+
+manifestGeneration: true

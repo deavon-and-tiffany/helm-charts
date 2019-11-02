@@ -1,0 +1,22 @@
+# hidden folders
+.*/**
+.*/*
+
+# generated files
+CHANGELOG.md
+
+# include special files
+!.gitignore
+!.gitattributes
+
+# mac files
+.DS_Store
+
+# win files
+[Tt]humbs.db
+
+# log files
+*.log
+
+#vscode
+!.vscode/*

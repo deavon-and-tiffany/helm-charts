@@ -1,0 +1,49 @@
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+
+metadata:
+  name: restricted
+  annotations:
+    seccomp.security.alpha.kubernetes.io/allowedProfileNames: "docker/default,runtime/default"
+    seccomp.security.alpha.kubernetes.io/defaultProfileName: "runtime/default"
+
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  requiredDropCapabilities:
+    - ALL
+
+  volumes:
+    - configMap
+    - emptyDir
+    - projected
+    - secret
+    - downwardAPI
+    - persistentVolumeClaim
+
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+
+  hostPorts:
+    - min: 80
+      max: 80
+    - min: 443
+      max: 443
+
+  runAsUser:
+    rule: MustRunAsNonRoot
+  supplementalGroups:
+    rule: MustRunAs
+    ranges:
+      - min: 1
+        max: 65535
+  fsGroup:
+    rule: MustRunAs
+    ranges:
+      - min: 1
+        max: 65535
+
+  seLinux:
+    rule: RunAsAny

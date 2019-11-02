@@ -1,0 +1,8 @@
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+
+metadata:
+  name: standard-priority
+value: 1000
+globalDefault: true
+description: "Pods with this priority class may be evicted and rescheduled during a scale event."
