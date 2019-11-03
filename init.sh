@@ -1,11 +1,5 @@
 #!/usr/bin/env bash
 
-# exit on error, unset variable, or when a pipe fails
-set -euo pipefail
-
-# enable globstar
-shopt -s globstar
-
 # get the current path
 CURRENT_PATH=$(pwd)
 
@@ -22,6 +16,12 @@ BIN_PATH="$ROOT_PATH/.bin"
 KUBECTL=$(type -p kubectl)
 HELM=$(type -p helm)
 KUBESEAL=$(type -p kubeseal)
+
+# exit on error, unset variable, or when a pipe fails
+set -uo pipefail
+
+# enable globstar
+shopt -s globstar
 
 __cluster_init() {
 
