@@ -9,9 +9,6 @@ stages:
   - deploy
 
 pages:
-  image:
-    name: alpine/helm
-    entrypoint: ["/bin/sh", "-c"]
   stage: deploy
   script:
     - ./publish.sh
