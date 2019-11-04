@@ -1,62 +1,23 @@
-# Default values for helm-operator
-
 nameOverride: "helm"
 fullnameOverride: "helm"
 
 image:
   repository: docker.io/fluxcd/helm-operator
   tag: 1.0.0-rc3
-  pullPolicy: IfNotPresent
-  pullSecret:
 
-createCRD: true
+createCRD: false
 updateChartDeps: true
 
 logFormat: fmt
 logReleaseDiffs: true
 
-chartsSyncInterval: 5m
-statusUpdateInterval: 5m
-workers: 2
+chartsSyncInterval: 3m
 
-git:
-  pollInterval: 5m
-  timeout: 60s
-  # Overrides for git over SSH. If you use your own git server, you
-  # will likely need to provide a host key for it in this field.
-  ssh:
-    # Generate a SSH key named identity: ssh-keygen -q -N "" -f ./identity
-    # create a Kubernetes secret: kubectl -n flux create secret generic helm-ssh --from-file=./identity
-    # delete the private key: rm ./identity
-    # add ./identity.pub as a read-only deployment key in your Git repo where the charts are
-    # set the secret name (helm-ssh) below
-    secretName: ""
-    known_hosts: ""
-    # You may want to configure access to multiple repositories via multiple deploy keys
-    # flux-helm-operator is configured in /etc/ssh/ssh_config to use for all hosts the file /etc/fluxd/ssh/identity
-    # this file is mounted from the above secret
-    # all entries in the secret are mounted in the same place /etc/fluxd/ssh/
-    # so we can add more entries by providing this config map with a key of config that refer to other files in /etc/fluxd/ssh/
-    # e.g. in the above secret create another key for example myprivatehelmrepo
-    # in the below config map create a key config and input the following
-    #
-    # Host *
-    # StrictHostKeyChecking yes
-    # IdentityFile /etc/fluxd/ssh/identity
-    # IdentityFile /var/fluxd/keygen/identity
-    # IdentityFile /var/fluxd/keygen/myprivatehelmrepo
-    # LogLevel error
-    #
-    # add the public key to the other repository as a deploy key and enjoy
-    configMapName: ""
-  # Global Git configuration See https://git-scm.com/docs/git-config for more details.
-  config:
-    enabled: true
-    secretName: "flux-git-credentials"
-    data: ""
-    # data: |
-    #   [credential "https://github.com"]
-    #           username = foo
+configureRepositories:
+  enable: true
+  volumeName: repositories-yaml
+  secretName: flux-helm-repositories
+  cacheVolumeName: repositories-cache
 
 rbac:
   create: true
@@ -75,12 +36,18 @@ prometheus:
 
 replicaCount: 1
 
-nodeSelector: {}
-annotations: {}
-tolerations: []
-affinity: {}
-
 resources:
   requests:
     cpu: 50m
     memory: 64Mi
+
+affinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        preference:
+          matchExpression:
+            - key: pool
+              operator: In
+              values:
+                - system

@@ -18,7 +18,7 @@ HELM=$(type -p helm)
 KUBESEAL=$(type -p kubeseal)
 
 # exit on error, unset variable, or when a pipe fails
-set -uo pipefail
+set -euo pipefail
 
 # enable globstar
 shopt -s globstar
@@ -31,6 +31,7 @@ __cluster_init() {
     local CONFIGURATION_BUCKET_REGION=${CONFIGURATION_BUCKET_REGION:-""}
     local KUBE_CONTEXT=${KUBE_CONTEXT:-""}
     local FLUX_GIT_URL=${FLUX_GIT_URL:-""}
+    local FLUX_HELM_URL=${FLUX_HELM_URL:-""}
     local FLUX_GIT_BRANCH=${FLUX_GIT_BRANCH:-"master"}
     local FLUX_GIT_USERNAME=${FLUX_GIT_USERNAME:-}
     local FLUX_GIT_PASSWORD=${FLUX_GIT_PASSWORD:-}
@@ -46,6 +47,10 @@ __cluster_init() {
             -f|--flux-git-url)
                 shift
                 FLUX_GIT_URL="${1#https://}"
+                ;;
+            -f|--flux-helm-url)
+                shift
+                FLUX_HELM_URL=$1
                 ;;
             -u|--flux-git-username)
                 shift
@@ -197,15 +202,18 @@ __cluster_init() {
         --namespace=gitops-system --install --wait
 
     # deploy helm-operator
-    # $HELM upgrade helm-operator $CHART_PATH/fluxcd/helm-operator \
-    #     --values=$GLOBAL_PATH/helm/gitops-system/helm-operator.yaml \
-    #     --namespace=gitops-system --install --wait
+    $HELM upgrade helm $CHART_PATH/fluxcd/helm-operator \
+        --values=$GLOBAL_PATH/helm/gitops-system/helm-operator.yaml \
+        --set=configureRepositories.repositories[0].name=org \
+        --set=configureRepositories.repositories[0].url=$FLUX_HELM_URL \
+        --namespace=gitops-system --install --wait
 }
 
 __prerequisites() {
 
     # test for required variables
-    if [[ -z "${FLUX_GIT_URL:-}" || -z "${FLUX_GIT_USERNAME:-}" || -z "${FLUX_GIT_PASSWORD:-}" ]]; then
+    if [[ -z "${FLUX_GIT_URL:-}" || -z "${FLUX_HELM_URL:-}" \
+        || -z "${FLUX_GIT_USERNAME:-}" || -z "${FLUX_GIT_PASSWORD:-}" ]]; then
 
         # we error out
         __cluster_init_help
@@ -213,6 +221,10 @@ __prerequisites() {
 
         if [ -z "${FLUX_GIT_URL:-}" ]; then
             __fail "The --flux-git-url argument or FLUX_GIT_URL environment variable must be set."
+        fi
+
+        if [ -z "${FLUX_GIT_URL:-}" ]; then
+            __fail "The --flux-helm-url argument or FLUX_HELM_URL environment variable must be set."
         fi
 
         if [ -z "${FLUX_GIT_USERNAME:-}" ]; then
@@ -416,8 +428,13 @@ __cluster_init_help() {
     echo
     __info "-f|--flux-git-url <URL>"
     echo "  the flux repository url used to retain the state of the cluster through gitops manifests"
-    echo "  ALLOWED VALUES: The URL must not include a protocol. It is assumed to use HTTPS"
+    echo "  ALLOWED VALUES: The URL must be hosted on HTTP/HTTPS"
     __fail "  REQUIRED, ENVIRONMENT VARIABLE: FLUX_GIT_URL"
+    echo
+    __info "-h|--flux-helm-url <URL>"
+    echo "  the flux helm repository url used to host helm charts"
+    echo "  ALLOWED VALUES: The URL must be hosted on HTTP/HTTPS"
+    __fail "  REQUIRED, ENVIRONMENT VARIABLE: FLUX_HELM_URL"
     echo
     __info "-u|--flux-git-username <USERNAME>"
     echo "  the username for authenticating to the git repository"
@@ -481,23 +498,28 @@ __cluster_init_help() {
     __success "# initialize a cluster from the local file system using the default (currently selected) context"
     echo "./init.sh"
     echo "      --flux-git-username org-gitops --flux-git-password some-pat-token \\"
-    echo "      --flux-git-url https://github.com/organization/gitops.git"
+    echo "      --flux-git-url https://github.com/organization/gitops.git \\"
+    echo "      --flux-helm-url https://organization.gitlab.io/helm"
     echo
     __success "# initialize a cluster from the local file system using the minikube context"
     echo "./init.sh --context minikube"
     echo "      --flux-git-username org-gitops --flux-git-password some-pat-token \\"
-    echo "      --flux-git-url https://github.com/organization/gitops.git"
+    echo "      --flux-git-url https://github.com/organization/gitops.git \\"
+    echo "      --flux-helm-url https://organization.gitlab.io/helm"
     echo
     __success "# initialize a cluster hosted on aws with configuration from the example-config-bucket using the default context"
     echo "./init.sh --platform aws --configuration-bucket example-config-bucket \\"
     echo "      --flux-git-username org-gitops --flux-git-password some-pat-token \\"
-    echo "      --flux-git-url https://github.com/organization/gitops.git"
+    echo "      --flux-git-url https://github.com/organization/gitops.git \\"
+    echo "      --flux-helm-url https://organization.gitlab.io/helm"
     echo
     __success "# initialize a cluster hosted on aws with configuration from the example-config-bucket using context"
     __success "# example-kube-dev and kubernetes manifests in the dev branch"
     echo "./init.sh --platform aws --configuration-bucket example-config-bucket --context example-kube-dev \\"
     echo "      --flux-git-username org-gitops --flux-git-password some-pat-token \\"
-    echo "      --flux-git-url https://github.com/organization/gitops.git --branch dev"
+    echo "      --flux-git-url https://github.com/organization/gitops.git \\"
+    echo "      --flux-helm-url https://organization.gitlab.io/helm \\"
+    echo "      --branch dev"
     echo
     __success "# initialize using environment variables"
     echo "CLOUD_PLATFORM=\"aws\" \\"
@@ -507,6 +529,7 @@ __cluster_init_help() {
     echo "FLUX_GIT_USERNAME=\"org-gitops\" \\"
     echo "FLUX_GIT_PASSWORD=\"some-pat-token\" \\"
     echo "FLUX_GIT_URL=\"https://github.com/organization/gitops.git\" \\"
+    echo "FLUX_HELM_URL=\"https://organization.gitlab.io/helm\" \\"
     echo "./init.sh"
 }
 
