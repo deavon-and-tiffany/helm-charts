@@ -24,6 +24,7 @@ helm init --client-only
 # add upstream repositories
 helm repo add fluxcd https://charts.fluxcd.io
 helm repo add istio https://storage.googleapis.com/istio-release/releases/1.3.3/charts/
+helm repo add elastic https://helm.elastic.co
 
 # reset and redownload latest stable charts
 rm -rf $ROOT_PATH/charts/stable/*
@@ -33,6 +34,7 @@ helm fetch --untar --untardir $ROOT_PATH/charts/stable stable/grafana
 helm fetch --untar --untardir $ROOT_PATH/charts/stable stable/sealed-secrets
 helm fetch --untar --untardir $ROOT_PATH/charts/stable stable/cert-manager
 helm fetch --untar --untardir $ROOT_PATH/charts/stable stable/velero
+helm fetch --untar --untardir $ROOT_PATH/charts/stable stable/fluent-bit
 
 # reset and redownload flux charts
 rm -rf $ROOT_PATH/charts/fluxcd/*
@@ -43,3 +45,8 @@ helm fetch --untar --untardir $ROOT_PATH/charts/fluxcd fluxcd/helm-operator
 rm -rf $ROOT_PATH/charts/istio/*
 helm fetch --untar --untardir $ROOT_PATH/charts/istio istio/istio-init
 helm fetch --untar --untardir $ROOT_PATH/charts/istio istio/istio
+
+# reset and redownload elastic charts
+rm -rf $ROOT_PATH/charts/elastic/*
+helm fetch --untar --untardir $ROOT_PATH/charts/elastic elastic/elasticsearch
+helm fetch --untar --untardir $ROOT_PATH/charts/elastic elastic/kibana
