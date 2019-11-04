@@ -193,6 +193,10 @@ __cluster_init() {
         $KUBECTL apply -f $INIT_WORKDIR/flux-git-credentials.yaml
     fi
 
+    # install tiller into the cluster
+    __fail "WARNING: THIS SHOULD BE REMOVED ONCE https://github.com/fluxcd/helm-operator/pull/79 IS RELEASED"
+    $HELM init --override 'spec.template.spec.containers[0].command'='{/tiller,--storage=secret}'
+
     # deploy flux
     $HELM upgrade flux $CHART_PATH/fluxcd/flux \
         --values=$GLOBAL_PATH/helm/gitops-system/flux.yaml \
