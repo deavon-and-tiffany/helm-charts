@@ -1,6 +1,6 @@
-# Deployment Manifests for a Kubernetes Cluster (Development)
+# Helm Charts for Kubernetes
 
-> A reference implementation of a production-like Kubernetes cluster for development environments.
+> A reference implementation of a helm repository for use with flux deployments.
 
 ## Vitals
 
@@ -87,8 +87,8 @@ For a list of all open source dependencies, see [NOTICE][notice-url].
 
 [![FOSSA Status][fossa-scan-image]][fossa-scan-url]
 
-[build-image]: https://github.com/deavon-and-tiffany/kube-deployments/workflows/release/badge.svg
-[build-url]: https://github.com/deavon-and-tiffany/kube-deployments/workflows/release
+[build-image]: https://github.com/deavon-and-tiffany/helm-charts/workflows/release/badge.svg
+[build-url]: https://github.com/deavon-and-tiffany/helm-charts/actions?query=workflow%3Arelease
 
 [cncf-url]: https://cncf.io
 
