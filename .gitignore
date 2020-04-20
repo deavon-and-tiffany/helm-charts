@@ -1,25 +1,12 @@
-# hidden folders
 .*/**
-.*/*
+.*
 
-# generated files
-CHANGELOG.md
-
-# include special files
 !.gitignore
 !.gitattributes
+!.editorconfig
+!.releaserc.yaml
 
-# mac files
-.DS_Store
+!/.github/
+!/.github/**
 
-# win files
-[Tt]humbs.db
-
-# log files
-*.log
-
-#vscode
-!.vscode/*
-
-#artifacts
-artifacts/
+artifacts/**
