@@ -2,22 +2,22 @@
 apiVersion: {{ template "elasticsearch.statefulset.apiVersion" . }}
 kind: StatefulSet
 metadata:
-  name: {{ template "uname" . }}
+  name: {{ template "elasticsearch.uname" . }}
   labels:
     heritage: {{ .Release.Service | quote }}
     release: {{ .Release.Name | quote }}
     chart: "{{ .Chart.Name }}"
-    app: "{{ template "uname" . }}"
+    app: "{{ template "elasticsearch.uname" . }}"
     {{- range $key, $value := .Values.labels }}
     {{ $key }}: {{ $value | quote }}
     {{- end }}
   annotations:
-    esMajorVersion: "{{ include "esMajorVersion" . }}"
+    esMajorVersion: "{{ include "elasticsearch.esMajorVersion" . }}"
 spec:
-  serviceName: {{ template "uname" . }}-headless
+  serviceName: {{ template "elasticsearch.uname" . }}-headless
   selector:
     matchLabels:
-      app: "{{ template "uname" . }}"
+      app: "{{ template "elasticsearch.uname" . }}"
   replicas: {{ .Values.replicas }}
   podManagementPolicy: {{ .Values.podManagementPolicy }}
   updateStrategy:
@@ -25,7 +25,7 @@ spec:
   {{- if .Values.persistence.enabled }}
   volumeClaimTemplates:
   - metadata:
-      name: {{ template "uname" . }}
+      name: {{ template "elasticsearch.uname" . }}
     {{- with .Values.persistence.annotations  }}
       annotations:
 {{ toYaml . | indent 8 }}
@@ -35,12 +35,15 @@ spec:
   {{- end }}
   template:
     metadata:
-      name: "{{ template "uname" . }}"
+      name: "{{ template "elasticsearch.uname" . }}"
       labels:
         heritage: {{ .Release.Service | quote }}
         release: {{ .Release.Name | quote }}
         chart: "{{ .Chart.Name }}"
-        app: "{{ template "uname" . }}"
+        app: "{{ template "elasticsearch.uname" . }}"
+        {{- range $key, $value := .Values.labels }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
       annotations:
         {{- range $key, $value := .Values.podAnnotations }}
         {{ $key }}: {{ $value | quote }}
@@ -59,7 +62,7 @@ spec:
         fsGroup: {{ .Values.fsGroup }} # Deprecated value, please use .Values.podSecurityContext.fsGroup
         {{- end }}
       {{- if .Values.rbac.create }}
-      serviceAccountName: "{{ template "uname" . }}"
+      serviceAccountName: "{{ template "elasticsearch.uname" . }}"
       {{- else if not (eq .Values.rbac.serviceAccountName "") }}
       serviceAccountName: {{ .Values.rbac.serviceAccountName | quote }}
       {{- end }}
@@ -85,7 +88,7 @@ spec:
               - key: app
                 operator: In
                 values:
-                - "{{ template "uname" .}}"
+                - "{{ template "elasticsearch.uname" .}}"
             topologyKey: {{ .Values.antiAffinityTopologyKey }}
       {{- else if eq .Values.antiAffinity "soft" }}
         podAntiAffinity:
@@ -98,7 +101,7 @@ spec:
                 - key: app
                   operator: In
                   values:
-                  - "{{ template "uname" . }}"
+                  - "{{ template "elasticsearch.uname" . }}"
       {{- end }}
       {{- with .Values.nodeAffinity }}
         nodeAffinity:
@@ -114,7 +117,7 @@ spec:
         {{- if .Values.esConfig }}
         - name: esconfig
           configMap:
-            name: {{ template "uname" . }}-config
+            name: {{ template "elasticsearch.uname" . }}-config
         {{- end }}
 {{- if .Values.keystore }}
         - name: keystore
@@ -138,6 +141,7 @@ spec:
           runAsUser: 0
           privileged: true
         image: "{{ .Values.image }}:{{ .Values.imageTag }}"
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         command: ["sysctl", "-w", "vm.max_map_count={{ .Values.sysctlVmMaxMapCount}}"]
         resources:
 {{ toYaml .Values.initResources | indent 10 }}
@@ -145,6 +149,7 @@ spec:
 {{ if .Values.keystore }}
       - name: keystore
         image: "{{ .Values.image }}:{{ .Values.imageTag }}"
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         command:
         - sh
         - -c
@@ -181,13 +186,12 @@ spec:
 {{ tpl .Values.extraInitContainers . | indent 6 }}
       {{- end }}
       containers:
-      - name: "{{ template "name" . }}"
+      - name: "{{ template "elasticsearch.name" . }}"
         securityContext:
 {{ toYaml .Values.securityContext | indent 10 }}
         image: "{{ .Values.image }}:{{ .Values.imageTag }}"
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         readinessProbe:
-{{ toYaml .Values.readinessProbe | indent 10 }}
           exec:
             command:
               - sh
@@ -209,10 +213,10 @@ spec:
                 }
 
                 if [ -f "${START_FILE}" ]; then
-                    echo 'Elasticsearch is already running, lets check the node is healthy'
-                    http "/"
+                    echo 'Elasticsearch is already running, lets check the node is healthy and there are master nodes available'
+                    http "/_cluster/health?timeout=0s"
                 else
-                    echo 'Waiting for elasticsearch cluster to become cluster to be ready (request params: "{{ .Values.clusterHealthCheckParams }}" )'
+                    echo 'Waiting for elasticsearch cluster to become ready (request params: "{{ .Values.clusterHealthCheckParams }}" )'
                     if http "/_cluster/health?{{ .Values.clusterHealthCheckParams }}" ; then
                         touch ${START_FILE}
                         exit 0
@@ -221,6 +225,7 @@ spec:
                         exit 1
                     fi
                 fi
+{{ toYaml .Values.readinessProbe | indent 10 }}
         ports:
         - name: http
           containerPort: {{ .Values.httpPort }}
@@ -234,20 +239,20 @@ spec:
               fieldRef:
                 fieldPath: metadata.name
           {{- if eq .Values.roles.master "true" }}
-          {{- if ge (int (include "esMajorVersion" .)) 7 }}
+          {{- if ge (int (include "elasticsearch.esMajorVersion" .)) 7 }}
           - name: cluster.initial_master_nodes
-            value: "{{ template "endpoints" . }}"
+            value: "{{ template "elasticsearch.endpoints" . }}"
           {{- else }}
           - name: discovery.zen.minimum_master_nodes
             value: "{{ .Values.minimumMasterNodes }}"
           {{- end }}
           {{- end }}
-          {{- if lt (int (include "esMajorVersion" .)) 7 }}
+          {{- if lt (int (include "elasticsearch.esMajorVersion" .)) 7 }}
           - name: discovery.zen.ping.unicast.hosts
-            value: "{{ template "masterService" . }}-headless"
+            value: "{{ template "elasticsearch.masterService" . }}-headless"
           {{- else }}
           - name: discovery.seed_hosts
-            value: "{{ template "masterService" . }}-headless"
+            value: "{{ template "elasticsearch.masterService" . }}-headless"
           {{- end }}
           - name: cluster.name
             value: "{{ .Values.clusterName }}"
@@ -264,7 +269,7 @@ spec:
 {{- end }}
         volumeMounts:
           {{- if .Values.persistence.enabled }}
-          - name: "{{ template "uname" . }}"
+          - name: "{{ template "elasticsearch.uname" . }}"
             mountPath: /usr/share/elasticsearch/data
           {{- end }}
 {{ if .Values.keystore }}
@@ -308,13 +313,13 @@ spec:
               else
                 BASIC_AUTH=''
               fi
-              curl -XGET -s -k --fail ${BASIC_AUTH} {{ .Values.protocol }}://{{ template "masterService" . }}:{{ .Values.httpPort }}${path}
+              curl -XGET -s -k --fail ${BASIC_AUTH} {{ .Values.protocol }}://{{ template "elasticsearch.masterService" . }}:{{ .Values.httpPort }}${path}
           }
 
           cleanup () {
             while true ; do
               local master="$(http "/_cat/master?h=node" || echo "")"
-              if [[ $master == "{{ template "masterService" . }}"* && $master != "${NODE_NAME}" ]]; then
+              if [[ $master == "{{ template "elasticsearch.masterService" . }}"* && $master != "${NODE_NAME}" ]]; then
                 echo "This node is not master."
                 break
               fi
@@ -345,3 +350,6 @@ spec:
         lifecycle:
 {{ toYaml .Values.lifecycle | indent 10 }}
 {{- end }}
+      {{- if .Values.extraContainers }}
+{{ tpl .Values.extraContainers . | indent 6 }}
+      {{- end }}

@@ -1,4 +1,4 @@
-{{- if .Values.memcached.enabled }}
+{{- if and (eq .Values.memcached.enabled true) (eq .Values.registry.disableScanning false)  }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -18,13 +18,23 @@ spec:
       release: {{ .Release.Name }}
   template:
     metadata:
+      {{- if .Values.memcached.annotations }}
+      annotations:
+      {{- .Values.memcached.annotations | toYaml | trimSuffix "\n" | nindent 8 }}
+      {{- end }}
       labels:
         app: {{ template "flux.name" . }}-memcached
         release: {{ .Release.Name }}
     spec:
+      {{- if .Values.memcached.priorityClassName }}
+      priorityClassName: {{ .Values.memcached.priorityClassName }}
+      {{- end }}
       {{- if .Values.memcached.pullSecret }}
       imagePullSecrets:
         - name: {{ .Values.memcached.pullSecret }}
+      {{- end }}
+      {{- if .Values.rbac.pspEnabled }}
+      serviceAccountName: {{ template "flux.serviceAccountName" . }}
       {{- end }}
       containers:
       - name: memcached
@@ -42,10 +52,13 @@ spec:
           containerPort: 11211
         resources:
 {{ toYaml .Values.memcached.resources | indent 10 }}
+        {{- if .Values.memcached.addSecurityContext }}
         securityContext:
 {{ toYaml .Values.memcached.securityContext | indent 10 }}
-    {{- with .Values.memcached.nodeSelector }}
+        {{- end }}
       nodeSelector:
+        beta.kubernetes.io/os: linux
+      {{- with .Values.memcached.nodeSelector }}
 {{ toYaml . | indent 8 }}
     {{- end }}
     {{- with .Values.memcached.affinity }}

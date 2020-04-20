@@ -8,7 +8,9 @@ replicas: 1
 # Extra environment variables to append to this nodeGroup
 # This will be appended to the current 'env:' key. You can use any of the kubernetes env
 # syntax here
-extraEnvs: []
+extraEnvs:
+  - name: "NODE_OPTIONS"
+    value: "--max-old-space-size=1800"
 #  - name: MY_ENVIRONMENT_VAR
 #    value: the_value_goes_here
 
@@ -22,7 +24,7 @@ secretMounts: []
 #    subPath: kibana.keystore # optional
 
 image: "docker.elastic.co/kibana/kibana"
-imageTag: "7.4.1"
+imageTag: "7.6.2"
 imagePullPolicy: "IfNotPresent"
 
 # additionals labels
@@ -33,11 +35,11 @@ podAnnotations: {}
 
 resources:
   requests:
-    cpu: "100m"
-    memory: "500Mi"
+    cpu: "1000m"
+    memory: "2Gi"
   limits:
     cpu: "1000m"
-    memory: "1Gi"
+    memory: "2Gi"
 
 protocol: http
 
@@ -73,10 +75,15 @@ priorityClassName: ""
 
 httpPort: 5601
 
-# This is the max unavailable setting for the pod disruption budget
-# The default value of 1 will make sure that kubernetes won't allow more than 1
-# of your pods to be unavailable during maintenance
-maxUnavailable: 1
+extraContainers: ""
+# - name: dummy-init
+#   image: busybox
+#   command: ['echo', 'hey']
+
+extraInitContainers: ""
+# - name: dummy-init
+#   image: busybox
+#   command: ['echo', 'hey']
 
 updateStrategy:
   type: "Recreate"
@@ -85,12 +92,15 @@ service:
   type: ClusterIP
   port: 5601
   nodePort: ""
+  labels: {}
   annotations: {}
     # cloud.google.com/load-balancer-type: "Internal"
     # service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
     # service.beta.kubernetes.io/azure-load-balancer-internal: "true"
     # service.beta.kubernetes.io/openstack-internal-load-balancer: "true"
     # service.beta.kubernetes.io/cce-load-balancer-internal-vpc: "true"
+  loadBalancerSourceRanges: []
+    # 0.0.0.0/0
 
 ingress:
   enabled: false

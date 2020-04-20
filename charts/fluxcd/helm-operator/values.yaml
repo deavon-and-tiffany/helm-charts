@@ -5,9 +5,13 @@ fullnameOverride: ""
 
 image:
   repository: docker.io/fluxcd/helm-operator
-  tag: 1.0.0-rc3
+  tag: 1.0.1
   pullPolicy: IfNotPresent
   pullSecret:
+
+service:
+  type: ClusterIP
+  port: 3030
 
 # Include the HelmRelease definition on install
 createCRD: false
@@ -22,9 +26,13 @@ logReleaseDiffs: false
 # Period on which to reconcile the Helm releases with `HelmRelease` resources
 chartsSyncInterval: "3m"
 # Period on which to update the Helm release status in `HelmRelease` resources
-statusUpdateInterval:
+statusUpdateInterval: "30s"
 # Amount of workers processing releases
-workers: 2
+workers: 4
+
+# Helm versions supported by this operator instance
+helm:
+  versions: "v2,v3"
 
 # Tiller settings
 # If a hostname or IP is given here, that will be combined with the
@@ -42,6 +50,16 @@ tls:
   caContent: ""
   hostname: ""
 
+# ADVANCED: Allow for deploying Tiller as a sidecar (restricted to 'localhost' for security reasons).
+# When enabled, either .clusterRole.create should be true or .clusterRole.name should be set to the name of a cluster role granting the required privileges.
+# Please make extra sure you know what you are doing before enabling this. :)
+tillerSidecar:
+  enabled: false
+  image:
+    repository: gcr.io/kubernetes-helm/tiller
+    tag: v2.16.1
+  storage: secret
+
 # For charts stored in Helm repositories other than stable
 # mount repositories.yaml configuration in a volume
 configureRepositories:
@@ -54,12 +72,27 @@ configureRepositories:
     #   url: https://charts.bitnami.com
     #   username:
     #   password:
+    #   caFile:
+    #   certFile:
+    #   keyFile:
+
+# Helm plugins to initialize before starting the operator.
+initPlugins:
+  enable: false
+  cacheVolumeName: plugins-cache
+  plugins:
+  # - helmVersion: v3
+  #   plugin: https://github.com/hypnoglow/helm-s3.git
+  #   version: 0.9.2
 
 # For charts stored in Git repos set the SSH private key secret
 git:
   # Period on which to poll git chart sources for changes
   pollInterval: "5m"
   timeout: "20s"
+  # Ref to clone chart from if ref is unspecified in a HelmRelease,
+  # empty defaults to `master`
+  defaultRef: ""
   # Overrides for git over SSH. If you use your own git server, you
   # will likely need to provide a host key for it in this field.
   ssh:
@@ -105,6 +138,8 @@ rbac:
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
+  # Service account annotations
+  annotations: {}
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
   name:
@@ -137,6 +172,13 @@ kube:
 
 prometheus:
   enabled: false
+  serviceMonitor:
+    # Enables ServiceMonitor creation for the Prometheus Operator
+    create: false
+    interval:
+    scrapeTimeout:
+    namespace:
+    additionalLabels: {}
 
 # Additional environment variables to set
 extraEnvs: []
@@ -144,12 +186,28 @@ extraEnvs: []
 #   - name: FOO
 #     value: bar
 
-replicaCount: 1
+podAnnotations: {}
+podLabels: {}
 nodeSelector: {}
-annotations: {}
 tolerations: []
 affinity: {}
+extraVolumeMounts: []
+extraVolumes: []
+initContainers: []
 resources:
+#  limits:
+#    memory: 1Gi
   requests:
     cpu: 50m
     memory: 64Mi
+# Host aliases allow the modification of the hosts file (/etc/hosts) inside Helm Operator container.
+hostAliases: {}
+# - ip: "127.0.0.1"
+#   hostnames:
+#   - "foo.local"
+#   - "bar.local"
+# - ip: "10.1.2.3"
+#   hostnames:
+#   - "foo.remote"
+#   - "bar.remote"
+
