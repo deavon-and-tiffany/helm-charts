@@ -50,7 +50,6 @@ LICENSE         text
 # windows files
 *.cmd           text    eol=crlf
 *.bat           text    eol=crlf
-*.txt           text    eol=crlf
 *.ini           text    eol=crlf
 *.ps1           text    eol=crlf
 *.psm1          text    eol=crlf
