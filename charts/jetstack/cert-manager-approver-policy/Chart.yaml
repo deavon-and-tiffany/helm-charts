@@ -1,0 +1,13 @@
+apiVersion: v1
+appVersion: v0.4.0
+description: A Helm chart for cert-manager-approver-policy
+home: https://github.com/cert-manager/approver-policy
+maintainers:
+- email: cert-manager-dev@googlegroups.com
+  name: cert-manager-dev
+  url: https://cert-manager.io
+name: cert-manager-approver-policy
+sources:
+- https://github.com/cert-manager/approver-policy
+type: application
+version: v0.4.2

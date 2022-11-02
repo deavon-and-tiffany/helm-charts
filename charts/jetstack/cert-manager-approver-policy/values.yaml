@@ -1,0 +1,85 @@
+# -- Number of replicas of approver-policy to run.
+replicaCount: 1
+
+image:
+  # -- Target image repository.
+  repository: quay.io/jetstack/cert-manager-approver-policy
+  # -- Target image version tag.
+  tag: v0.4.0
+  # -- Kubernetes imagePullPolicy on Deployment.
+  pullPolicy: IfNotPresent
+
+# -- Optional secrets used for pulling the approver-policy container image.
+imagePullSecrets: []
+
+app:
+  # -- Verbosity of approver-policy logging.
+  logLevel: 1 # 1-5
+
+  # -- Extra CLI arguments that will be passed to the approver-policy process.
+  extraArgs: []
+
+  # -- List if signer names that approver-policy will be given permission to
+  # approve and deny. CertificateRequests referencing these signer names can be
+  # processed by approver-policy. See:
+  # https://cert-manager.io/docs/concepts/certificaterequest/#approval
+  approveSignerNames:
+  - "issuers.cert-manager.io/*"
+  - "clusterissuers.cert-manager.io/*"
+
+  metrics:
+    # -- Port for exposing Prometheus metrics on 0.0.0.0 on path '/metrics'.
+    port: 9402
+    # -- Service to expose metrics endpoint.
+    service:
+      # -- Create a Service resource to expose metrics endpoint.
+      enabled: true
+      # -- Service type to expose metrics.
+      type: ClusterIP
+      # -- ServiceMonitor resource for this Service.
+      servicemonitor:
+        enabled: false
+        prometheusInstance: default
+        interval: 10s
+        scrapeTimeout: 5s
+        labels: {}
+
+  readinessProbe:
+    # -- Container port to expose approver-policy HTTP readiness probe on
+    # default network interface.
+    port: 6060
+
+  webhook:
+    # -- Host that the webhook listens on.
+    host: 0.0.0.0
+    # -- Port that the webhook listens on.
+    port: 6443
+    # -- Timeout of webhook HTTP request.
+    timeoutSeconds: 5
+    # -- Directory to read and store the webhook TLS certificate key pair.
+    certificateDir: /tmp
+    # -- Type of Kubernetes Service used by the Webhook
+    service:
+      type: ClusterIP
+
+# -- Optional extra volume mounts. Useful for mounting custom root CAs
+volumeMounts: []
+#- name: my-volume-mount
+#  mountPath: /etc/approver-policy/secrets
+
+# -- Optional extra volumes.
+volumes: []
+#- name: my-volume
+#  secret:
+#    secretName: my-secret
+
+
+resources: {}
+  # -- Kubernetes pod resource limits for approver-policy.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # -- Kubernetes pod memory resource requests for approver-policy.
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi

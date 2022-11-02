@@ -1,0 +1,11 @@
+annotations:
+  artifacthub.io/changes: |
+    - "[FIX]: fixed generation for crds - stops variable evaluation"
+apiVersion: v2
+appVersion: 0.35.0
+description: A Helm chart for flux2
+name: flux2
+sources:
+- https://github.com/fluxcd-community/helm-charts
+type: application
+version: 1.6.1
